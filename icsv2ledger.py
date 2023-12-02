@@ -119,6 +119,7 @@ DEFAULTS = dotdict(
         "skip_dupes": False,
         "confirm_dupes": False,
         "incremental": False,
+        "interactive": False,
         "tags": False,
         "multiline_tags": False,
         "delimiter": ",",
@@ -382,6 +383,14 @@ def parse_args_and_config_file():
         help=(
             "append output as transactions are processed"
             " (default: {0})".format(DEFAULTS.incremental)
+        ),
+    )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help=(
+            "input account and payee interactively"
+            f" (default: {DEFAULTS.interactive})"
         ),
     )
     parser.add_argument(
@@ -977,7 +986,7 @@ def prompt_for_tags(prompt, values, default):
                 tags.remove(value)
         else:
             value = tagify(value)
-            if not value in tags:
+            if value not in tags:
                 tags.append(value)
         value = prompt_for_value(prompt, values, ", ".join(tags))
     return tags
@@ -1022,7 +1031,6 @@ def reset_stdin():
 
 
 def main(options):
-
     # Define responses to yes/no prompts
     possible_yesno = {"Y", "N"}
 
@@ -1088,11 +1096,20 @@ def main(options):
             # if options.clear_screen:
             #    print('\033[2J\033[;H')
             # print('\n' + entry.prompt())
-            value = prompt_for_value("Payee", possible_payees, payee)
+
+            # Uncomment for interactive input
+            if options.interactive:
+                value = prompt_for_value("Payee", possible_payees, payee)
+            else:
+                value = payee
             if value:
                 modified = modified if modified else value != payee
                 payee = value
-            value = prompt_for_value("Account", possible_accounts, account)
+            # Uncomment for interactive input
+            if options.interactive:
+                value = prompt_for_value("Account", possible_accounts, account)
+            else:
+                value = account
             if value:
                 modified = modified if modified else value != account
                 account = value
